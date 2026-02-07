@@ -1,0 +1,4 @@
+interface:
+  display_name: "Notion Diary"
+  short_description: "Log daily work summaries to the Notion diary pages."
+  default_prompt: "Use $notion-diary to record today's work in Notion."

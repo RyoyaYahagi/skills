@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementation Rules"
+  short_description: "Standardize workflow, format, and minimal-diff rules."
+  default_prompt: "Use $implementation-rules to apply the global workflow and load rules.md if present."

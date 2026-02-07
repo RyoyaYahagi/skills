@@ -1,0 +1,11 @@
+interface:
+  display_name: "Appium Real Device"
+  short_description: "Run real-device Appium MCP tests"
+  default_prompt: "Use $appium-real-device-test to run a real-device Appium MCP test."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "appium-mcp"
+      description: "Appium MCP server"
+      transport: "stdio"

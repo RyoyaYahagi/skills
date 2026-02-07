@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fastlane App Store Release"
+  short_description: "Automate iOS/macOS App Store & TestFlight releases"
+  default_prompt: "Use $fastlane-appstore-release to set up Fastlane lanes for App Store and TestFlight releases."

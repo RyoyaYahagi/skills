@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Ops"
+  short_description: "Git workflow for commit, push, PR creation, and CI."
+  default_prompt: "Use $git-ops when asked to commit, push, or create a PR."

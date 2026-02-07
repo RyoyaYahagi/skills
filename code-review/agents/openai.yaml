@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Review"
+  short_description: "Review changes for risks, tests, and rule violations."
+  default_prompt: "Use $code-review to audit changes against rules.md and standards."

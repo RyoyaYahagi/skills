@@ -1,0 +1,4 @@
+interface:
+  display_name: "Security Audit"
+  short_description: "Commercial release security and compliance audit workflow."
+  default_prompt: "Use $security-audit to run the pre-release security review."
