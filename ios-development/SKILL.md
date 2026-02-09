@@ -13,6 +13,22 @@ SwiftUI/UIKitアプリの実装パターンとベストプラクティス。
 2. 画面・機能ごとに適切なパターンを適用
 3. 必要に応じてデータ永続化・API通信・通知を設定
 
+## シミュレーター設定
+
+xcodebuildでビルド・テストを実行する際は、以下のシミュレーターを使用すること：
+
+```bash
+# ビルドコマンド
+xcodebuild -project {ProjectName}.xcodeproj -scheme {SchemeName} \
+  -destination 'platform=iOS Simulator,name=iPhone 17' build
+
+# テストコマンド
+xcodebuild -project {ProjectName}.xcodeproj -scheme {SchemeName} \
+  -destination 'platform=iOS Simulator,name=iPhone 17' test
+```
+
+**注意**: iPhone 16やその他のシミュレーターではなく、必ず**iPhone 17**を使用すること。
+
 ## 機能別ガイド
 
 | 機能            | 参照ドキュメント                 |
