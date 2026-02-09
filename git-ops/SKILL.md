@@ -15,10 +15,12 @@ description: Git operations policy including automatic branch/worktree creation 
 
 ## 自動実行フロー
 1. **タスク情報の確定**: type/description/issue番号を決める
-2. **ブランチ・Worktree自動設定**: `scripts/auto-worktree.sh`でタスク用worktreeを作成または再利用
-3. **作業場所の固定**: 以降の実装/テスト/コミットは必ずそのworktreeで実施
-4. **変更確認**: `git status`で未コミットの変更を確認
-5. **自動コミット**: 変更があれば`scripts/auto-commit.sh`で自動コミット
+2. **並行化可否の評価（必須）**: 当該タスクが他タスクと独立実行できるか毎回評価する
+3. **スレッド分離の提案（必須）**: 並行化可能なら、ユーザーに新規スレッド作成を依頼する
+4. **ブランチ・Worktree自動設定**: `scripts/auto-worktree.sh`でタスク用worktreeを作成または再利用
+5. **作業場所の固定**: 以降の実装/テスト/コミットは必ずそのworktreeで実施
+6. **変更確認**: `git status`で未コミットの変更を確認
+7. **自動コミット**: 変更があれば`scripts/auto-commit.sh`で自動コミット
 
 ## 必須ステップ
 - `references/git-policy.md`を読み、ポリシーに従う
@@ -48,6 +50,8 @@ description: Git operations policy including automatic branch/worktree creation 
 
 ## スレッド運用規約（Worktree連動）
 - 原則: **1タスク = 1worktree = 1スレッド**
+- 毎タスク開始時に、並行化可能かどうかを必ず評価する
+- 並行化可能と判断した場合、必ず「スレッド分離」をユーザーに提案する
 - 並行タスク時は、worktreeごとに会話スレッドを分離する
 - 同一スレッドで複数worktreeを扱う場合は、毎回「対象worktreeパス」と「ブランチ名」を先頭で明示する
 - エージェントは新規スレッドを自動作成できないため、必要時は人間に新規スレッド作成を依頼する
