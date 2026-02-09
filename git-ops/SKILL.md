@@ -46,6 +46,12 @@ description: Git operations policy including automatic branch/worktree creation 
 - ルート変更: `GIT_WORKTREE_ROOT` 環境変数で上書き可能
 - 既存ブランチのworktreeがある場合は再作成せず再利用する
 
+## スレッド運用規約（Worktree連動）
+- 原則: **1タスク = 1worktree = 1スレッド**
+- 並行タスク時は、worktreeごとに会話スレッドを分離する
+- 同一スレッドで複数worktreeを扱う場合は、毎回「対象worktreeパス」と「ブランチ名」を先頭で明示する
+- エージェントは新規スレッドを自動作成できないため、必要時は人間に新規スレッド作成を依頼する
+
 ## 出力
 - `references/git-policy.md`で指定されたフォーマットで結果を報告
 
