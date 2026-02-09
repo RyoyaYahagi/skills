@@ -30,6 +30,11 @@ description: リポジトリ運用エージェント - git操作・CI・PR作成
 - 例: `feature/ISSUE-123-add-login`, `fix/ISSUE-456-api-error`
 - エージェントがベースブランチを確認して作成
 
+### 2.5 タスク別Worktree設定（自動）
+- `scripts/auto-worktree.sh [type] [description] [issue-number]` を実行
+- 既存worktreeがあれば再利用し、なければ `../wt/<repo名>/<branch>` に自動作成
+- 実装・テスト・コミットは必ず対象worktreeで実施
+
 ### 3. 実装・小刻みコミット（自動）
 - エージェントが作業単位でコミット（Conventional Commits準拠）
 - コミット例: `feat(auth): add OAuth login (#123)`
@@ -63,6 +68,41 @@ description: リポジトリ運用エージェント - git操作・CI・PR作成
 
 2. **異なるスコープの変更時**
    - 現在の作業と異なるスコープ（異なるIssue番号など）の変更を開始する場合
+
+### Worktree作成タイミング
+以下の条件を満たしたら、タスク用worktreeを作成または再利用する：
+1. **新しいタスク開始時**
+   - ブランチ決定直後に `scripts/auto-worktree.sh` を実行
+2. **並行開発開始時**
+   - 既存タスクと同時進行する場合、必ず別worktreeを使う
+3. **既存タスク再開時**
+   - `git worktree list` で対象ブランチのworktreeを探索し再利用する
+
+### スレッド分離タイミング
+以下の条件を満たしたら、会話スレッドを分離して進行する：
+1. **並行タスク開始時**
+   - worktreeを新規作成したタイミングで、新しい会話スレッドへ切り替える
+2. **別Issueへ切替時**
+   - 異なるIssue番号のタスクへ移る場合、必ず別スレッドにする
+3. **再開時**
+   - 既存worktreeを再利用する場合も、対応する既存スレッドを使う
+
+### 並行化可否の評価（必須）
+すべてのタスク開始時に、次を必ず評価する：
+1. **独立性**
+   - ファイルセット・責務・Issueが他タスクと分離できるか
+2. **依存性**
+   - 先行タスク完了を待たずに進められるか
+3. **リスク**
+   - 同一スレッドで扱うとコンテキスト混在が起きないか
+
+判定ルール:
+- 1つでも「分離できる」要素がある場合は、並行化候補として扱う
+- 並行化候補は、必ずユーザーへ「新規スレッド作成」を提案する
+
+注記:
+- エージェントは会話スレッドを自動生成できないため、人間が作成する
+- 自動生成不可の場合、エージェントは「推奨スレッド名」と「対象worktreeパス」を提示する
 
 ### コミットタイミング
 以下のタイミングで自動コミットを行う：
@@ -127,17 +167,14 @@ feature/20260208-barcode-scanner    # ✅
 - **ビルド成功時**（これが最低限の基準）
 - 別の機能に着手する前
 
-#### 3. Git Worktreeの活用（並行開発時）
-複数機能を並行で開発する場合はworktreeを使用：
+#### 3. Git Worktreeの自動活用（並行開発時）
+複数機能を並行で開発する場合は `scripts/auto-worktree.sh` を使用：
 ```bash
-# メインのワークツリー
-/path/to/stockpile_ios          # main or develop
+# 例: feature/123-login のworktreeを作成/再利用
+./scripts/auto-worktree.sh feature "login" 123
 
-# 機能Aのワークツリー
-git worktree add ../stockpile-cloudkit feature/cloudkit
-
-# 機能Bのワークツリー  
-git worktree add ../stockpile-barcode feature/barcode
+# 出力されたパスへ移動して作業
+cd ../wt/<repo名>/feature-123-login
 ```
 
 **Worktreeのメリット:**
@@ -162,7 +199,7 @@ git stash pop
 新機能の開発を開始する前に：
 - [ ] 現在のブランチを確認（`git branch --show-current`）
 - [ ] 未コミットの変更がないか確認（`git status`）
-- [ ] 新しい機能ブランチを作成（`git switch -c feature/...`）
+- [ ] 新しい機能ブランチとworktreeを作成（`./scripts/auto-worktree.sh ...`）
 - [ ] 既存の別機能の変更がないか確認
 
 ---
@@ -190,15 +227,16 @@ git stash pop
 1. **ブランチ確認・作成**:
      - 現在の変更が新しい機能/タスクの場合、必ず新ブランチを作成して移動する
      - 誤ったブランチ（develop/mainなど）にいる場合、変更を持ったまま適切なブランチへ切り替える (`git switch -c new-branch`)
-2. ブランチの命名（`<type>/...`）
-3. 小さな変更のコミット（Conventional Commits準拠）
-3. `git push origin <branch>`（main/master以外）
-4. テスト実行、静的解析（linters）の実行
-5. PRの作成（`scripts/pr.sh` 使用、マージはしない）
-6. PR説明文・変更点の要約生成
-7. 軽微なconflict解消（事前ポリシーで許可した場合のみ、解消案をPRに記載）
-8. CIログの取得と要約
-9. 自動実行ログをPRに添付
+2. `scripts/auto-worktree.sh` によるタスク別worktreeの作成/再利用
+3. ブランチの命名（`<type>/...`）
+4. 小さな変更のコミット（Conventional Commits準拠）
+5. `git push origin <branch>`（main/master以外）
+6. テスト実行、静的解析（linters）の実行
+7. PRの作成（`scripts/pr.sh` 使用、マージはしない）
+8. PR説明文・変更点の要約生成
+9. 軽微なconflict解消（事前ポリシーで許可した場合のみ、解消案をPRに記載）
+10. CIログの取得と要約
+11. 自動実行ログをPRに添付
 
 ### 必ず人が行う（自動化しない）
 - **PRの最終レビュー & 承認**
@@ -221,6 +259,10 @@ git stash pop
 9. **コンテキスト確認**: 作業開始前に必ず `git branch --show-current` でブランチを確認する
 10. **タスク分離**: 異なるタスク/Issueに取り組む際は、必ず新しいブランチを作成するか適切なブランチに切り替える
 11. **変更退避**: ブランチ切り替え時に未コミットの変更がある場合は、`git stash` で退避するかコミットする
+12. **スレッド分離**: 並行タスク時は worktree ごとに会話スレッドを分離する（1タスク=1worktree=1スレッド）
+13. **明示ルール**: 同一スレッドで複数worktreeを扱う場合、各応答の先頭で対象 `worktree path` と `branch` を明示する
+14. **評価義務**: すべてのタスク開始時に並行化可否を必ず評価する
+15. **提案義務**: 並行化可能と判断した場合、ユーザーにスレッド分離を必ず提案する
 
 ---
 
@@ -282,6 +324,12 @@ git stash pop
 - git add .
 - git commit -m "..."
 - git push origin develop
+
+## コンテキスト
+- thread: [推奨スレッド名 or 現在スレッド]
+- worktree: [対象worktreeの絶対パス]
+- branch: [対象ブランチ名]
+- parallelization: [possible / not-possible と判断理由1行]
 
 ## テスト/ビルド結果
 - npm run build: ✅ 成功 / ❌ 失敗

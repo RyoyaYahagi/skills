@@ -1,6 +1,6 @@
 ---
 name: git-ops
-description: Git operations policy including automatic branch creation and commits when code changes are complete. Use when asked to commit, push, create PRs, or when finishing a code change session.
+description: Git operations policy including automatic branch/worktree creation and commits when code changes are complete. Use when asked to commit, push, create PRs, or when finishing a code change session.
 ---
 
 # Git Ops
@@ -8,18 +8,24 @@ description: Git operations policy including automatic branch creation and commi
 ## 自動トリガー
 以下の状況で自動的にこのスキルを適用する：
 - **コード変更完了時**: 機能実装、バグ修正、リファクタリングが一区切りついた時
+- **タスク開始時**: 新しいIssue/機能の着手時（worktree準備）
 - **タスク切り替え時**: 別のタスクに移る前
 - **セッション終了時**: ユーザーが作業終了を示した時
 - **新機能開始時**: 新しい機能の実装を始める前（ブランチ確認）
 
 ## 自動実行フロー
-1. **ブランチ確認**: main/master/developにいる場合は新ブランチを作成
-2. **変更確認**: `git status`で未コミットの変更を確認
-3. **自動コミット**: 変更があれば`scripts/auto-commit.sh`で自動コミット
+1. **タスク情報の確定**: type/description/issue番号を決める
+2. **並行化可否の評価（必須）**: 当該タスクが他タスクと独立実行できるか毎回評価する
+3. **スレッド分離の提案（必須）**: 並行化可能なら、ユーザーに新規スレッド作成を依頼する
+4. **ブランチ・Worktree自動設定**: `scripts/auto-worktree.sh`でタスク用worktreeを作成または再利用
+5. **作業場所の固定**: 以降の実装/テスト/コミットは必ずそのworktreeで実施
+6. **変更確認**: `git status`で未コミットの変更を確認
+7. **自動コミット**: 変更があれば`scripts/auto-commit.sh`で自動コミット
 
 ## 必須ステップ
 - `references/git-policy.md`を読み、ポリシーに従う
 - **機能分離ポリシーを厳守**（1機能=1ブランチ）
+- `scripts/auto-worktree.sh`でタスク別worktreeを自動作成（既存があれば再利用）
 - `scripts/auto-commit.sh`でブランチ作成・コミットを自動化
 - `scripts/pr.sh`でPR作成
 - main/masterへの直接pushは禁止
@@ -33,9 +39,22 @@ description: Git operations policy including automatic branch creation and commi
 
 ## 並行開発時の対策
 複数機能を同時に開発する場合：
-1. **Worktree使用**: `git worktree add`で別ディレクトリに
+1. **Worktree自動化**: `scripts/auto-worktree.sh`でタスクごとに別ディレクトリを自動割当
 2. **Stash活用**: ブランチ切り替え前に`git stash push -m "機能名-wip"`
 3. **状態確認**: `git status`で混在を防止
+
+## Worktree配置規約
+- デフォルト配置先: `../wt/<repo名>/<branch名をスラッシュ置換>`
+- ルート変更: `GIT_WORKTREE_ROOT` 環境変数で上書き可能
+- 既存ブランチのworktreeがある場合は再作成せず再利用する
+
+## スレッド運用規約（Worktree連動）
+- 原則: **1タスク = 1worktree = 1スレッド**
+- 毎タスク開始時に、並行化可能かどうかを必ず評価する
+- 並行化可能と判断した場合、必ず「スレッド分離」をユーザーに提案する
+- 並行タスク時は、worktreeごとに会話スレッドを分離する
+- 同一スレッドで複数worktreeを扱う場合は、毎回「対象worktreeパス」と「ブランチ名」を先頭で明示する
+- エージェントは新規スレッドを自動作成できないため、必要時は人間に新規スレッド作成を依頼する
 
 ## 出力
 - `references/git-policy.md`で指定されたフォーマットで結果を報告
@@ -45,4 +64,3 @@ description: Git operations policy including automatic branch creation and commi
 - **implementation-rules**: コード実装完了後、本スキルで自動コミット
 - **code-review**: PR作成前のコードレビュー
 - **ios-cicd-pipeline**: PR作成後、CIが自動実行される
-
