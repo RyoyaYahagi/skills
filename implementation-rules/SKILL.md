@@ -14,5 +14,41 @@ description: Global implementation workflow and output format rules. Use when as
 ## Git keyword handling
 - If the request includes commit/push/PR/merge/deploy keywords, invoke `$git-ops` and follow its policy before executing any git operations.
 
+## 🚨 1機能1コミット（必須・厳守）
+
+### ⚠️ 最重要ルール
+**機能実装が完了しビルド成功したら、ユーザーへの報告・確認の前に必ずコミットを実行すること。**
+
+### 実装完了時の必須チェックリスト
+機能が完了したら、以下を**この順番で**実行：
+
+1. [ ] ビルド成功を確認
+2. [ ] `git status`で変更ファイルを確認
+3. [ ] `git-ops`スキルを呼び出してコミット実行
+4. [ ] コミット完了を確認
+5. [ ] ユーザーに報告
+
+### 自動コミットのトリガー
+以下の作業が完了しビルド成功したら、**即座に**コミット：
+- 新しいView/Screen追加
+- 新しいService/Repository追加
+- API連携実装
+- バグ修正
+- リファクタリング
+- 設定変更
+
+### 禁止事項（絶対に守ること）
+- ❌ コミットせずにユーザーに報告しない
+- ❌ コミットせずに次の機能に着手しない
+- ❌ 複数機能をまとめてコミットしない
+- ❌ 未完成の機能をコミットしない（WIPコミットは別ブランチで）
+- ❌ セッション終了時に未コミットの変更を残さない
+
+### 違反時の対応
+もしコミットを忘れていた場合：
+1. 即座に作業を中断
+2. 未コミットの変更をコミット
+3. ユーザーに謝罪と報告
+
 ## Output language
 - Respond in Japanese unless the user explicitly asks otherwise.

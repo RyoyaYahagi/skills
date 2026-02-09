@@ -49,7 +49,7 @@ jobs:
         run: |
           xcodebuild build-for-testing \
             -scheme "<SCHEME>" \
-            -destination "platform=iOS Simulator,name=iPhone 15" \
+            -destination "platform=iOS Simulator,name=iPhone 17" \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
 
@@ -57,7 +57,7 @@ jobs:
         run: |
           xcodebuild test-without-building \
             -scheme "<SCHEME>" \
-            -destination "platform=iOS Simulator,name=iPhone 15" \
+            -destination "platform=iOS Simulator,name=iPhone 17" \
             -resultBundlePath TestResults.xcresult
 
       - name: Upload Test Results
@@ -126,7 +126,7 @@ jobs:
     xcodebuild build-for-testing \
       -workspace "<PROJECT>.xcworkspace" \
       -scheme "<SCHEME>" \
-      -destination "platform=iOS Simulator,name=iPhone 15" \
+      -destination "platform=iOS Simulator,name=iPhone 17" \
       CODE_SIGNING_ALLOWED=NO
 ```
 
@@ -222,3 +222,9 @@ jobs:
 | ---------------- | ------------------------------------ |
 | `<SCHEME>`       | Xcodeスキーム名                      |
 | `<PROJECT>`      | プロジェクト名（.xcworkspace使用時） |
+
+> [!IMPORTANT]
+> **シミュレーターのデバイス名について**
+> 
+> テンプレート内の `iPhone 17` は **常にその時点で利用可能な最新モデルに置き換えてください。**
+> 利用可能なシミュレーターは `xcrun simctl list devices available` で確認できます。

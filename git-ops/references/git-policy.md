@@ -100,6 +100,73 @@ description: リポジトリ運用エージェント - git操作・CI・PR作成
 
 ---
 
+## 機能分離ポリシー（重要）
+
+### 問題: 複数機能の混在
+異なる機能を同じブランチで開発すると、以下の問題が発生する：
+- 分離が困難になる（例: CloudKitとバーコードスキャナーの混在）
+- ロールバックが複雑になる
+- レビューが困難になる
+
+### 解決策
+
+#### 1. 1機能 = 1ブランチ（厳守）
+```bash
+# 悪い例: 1ブランチで複数機能
+feature/20260208-misc-improvements  # ❌
+
+# 良い例: 機能ごとにブランチ
+feature/20260208-cloudkit-sync      # ✅
+feature/20260208-barcode-scanner    # ✅
+```
+
+#### 2. マイルストーンコミット
+以下のタイミングで**必ず**コミットする：
+- 新しいファイル作成後
+- 1機能の実装完了時
+- **ビルド成功時**（これが最低限の基準）
+- 別の機能に着手する前
+
+#### 3. Git Worktreeの活用（並行開発時）
+複数機能を並行で開発する場合はworktreeを使用：
+```bash
+# メインのワークツリー
+/path/to/stockpile_ios          # main or develop
+
+# 機能Aのワークツリー
+git worktree add ../stockpile-cloudkit feature/cloudkit
+
+# 機能Bのワークツリー  
+git worktree add ../stockpile-barcode feature/barcode
+```
+
+**Worktreeのメリット:**
+- 互いに干渉しない
+- ブランチ切り替え不要
+- stash忘れによる混在を防止
+
+#### 4. Stashルール
+ブランチ切り替え前に**必ず**以下を確認：
+```bash
+# 未コミットの変更を確認
+git status
+
+# 変更がある場合は退避
+git stash push -m "feature-name-wip"
+
+# 復元時
+git stash pop
+```
+
+#### 5. 機能開始チェックリスト
+新機能の開発を開始する前に：
+- [ ] 現在のブランチを確認（`git branch --show-current`）
+- [ ] 未コミットの変更がないか確認（`git status`）
+- [ ] 新しい機能ブランチを作成（`git switch -c feature/...`）
+- [ ] 既存の別機能の変更がないか確認
+
+---
+
 ## 命名規約
 
 ### ブランチ名

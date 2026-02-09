@@ -34,8 +34,15 @@ SwiftUI/UIKitアプリの実装パターンとベストプラクティス。
 ## 他スキルとの連携
 
 - **hig-ooui-mobile-design**: UI設計 → 本スキルで実装
+- **git-ops**: 機能実装完了 → コミット（**1機能1コミット必須**）
 - **ios-cicd-pipeline**: 実装 → CI/CDパイプライン
 - **fastlane-appstore-release**: CI → リリース
+
+### 実装→コミットフロー
+1. 機能実装完了
+2. ビルド成功確認
+3. git-opsでコミット提案
+4. 次の機能へ
 
 ## References
 

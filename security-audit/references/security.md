@@ -25,13 +25,25 @@ description: security-check - 商用リリース前のセキュリティ・コ�
      - テスト方針
      - 秘密情報の管理方針
 
-3. **前提情報の収集**
-   - アプリ種別: rules.md から自動取得
-   - 技術スタック: rules.md から自動取得
+3. **プロジェクトタイプの自動検出**
+   以下のファイルの存在でプロジェクトタイプを自動判定：
+   
+   | ファイル                              | プロジェクトタイプ    |
+   | ------------------------------------- | --------------------- |
+   | `*.xcodeproj` / `Package.swift`       | iOS/macOS (Swift)     |
+   | `package.json`                        | Node.js               |
+   | `Cargo.toml`                          | Rust                  |
+   | `pyproject.toml` / `requirements.txt` | Python                |
+   | `go.mod`                              | Go                    |
+   | `build.gradle` / `build.gradle.kts`   | Android (Kotlin/Java) |
+
+4. **前提情報の収集**
+   - アプリ種別: rules.md から自動取得（なければプロジェクト検出から推測）
+   - 技術スタック: rules.md から自動取得（なければプロジェクト検出から推測）
    - 取り扱うデータ: コードから推測 + 要確認
    - 認証方式: コードから特定
    - デプロイ環境: 設定ファイルから特定
-   - ライセンス方針: package.json / Cargo.toml 等から確認
+   - ライセンス方針: package.json / Cargo.toml / Package.swift 等から確認
 
 ---
 
@@ -87,6 +99,18 @@ pip-licenses --format=json --output-file=licenses.json
 semgrep --config auto . --json --output semgrep-report.json
 ```
 
+## iOS/Swift プロジェクト固有
+```bash
+# SwiftLint（セキュリティ関連ルール）
+swiftlint lint --reporter json > swiftlint-report.json
+
+# Info.plist セキュリティ設定チェック（手動確認用に内容表示）
+find . -name "Info.plist" -not -path "*/Pods/*" -exec echo "=== {} ===" \; -exec plutil -p {} \;
+
+# ハードコードされた秘密情報の検出
+grep -rn --include="*.swift" -E "(api[_-]?key|secret|password|token)\s*[:=]\s*\"[^\"]+\"" .
+```
+
 ---
 
 # レビュー観点（必須）
@@ -124,6 +148,47 @@ semgrep --config auto . --json --output semgrep-report.json
    - 型安全性
    - 可読性/重複
 
+6. **iOS/Swift 固有のセキュリティ** (iOSプロジェクトの場合):
+   
+   **データ保護**
+   - Keychain の適切な使用（UserDefaults に機密情報を保存していないか）
+   - Data Protection クラス（`completeFileProtection` 等）の適用
+   - `kSecAttrAccessible` の適切な設定
+   
+   **ネットワーク**
+   - App Transport Security (ATS) の設定
+     - `NSAllowsArbitraryLoads` が `true` になっていないか
+     - 例外ドメインの妥当性
+   - Certificate Pinning の実装（高セキュリティ要件の場合）
+   - URLSession での TLS 設定
+   
+   **Info.plist セキュリティ**
+   - 権限の最小化（不要な `NS*UsageDescription` がないか）
+   - Custom URL Scheme の悪用リスク
+   - `LSApplicationQueriesSchemes` の妥当性
+   - Exported UTIs の適切な設定
+   
+   **コード保護**
+   - Jailbreak 検知の実装（金融/決済アプリの場合）
+   - デバッガ検知（高セキュリティ要件の場合）
+   - `print()` / `NSLog()` でのデバッグ情報漏洩
+   - リリースビルドでの `DEBUG` フラグ除去
+   
+   **認証・認可**
+   - Biometric認証（Face ID/Touch ID）の適切な実装
+   - `LAContext` のエラーハンドリング
+   - App Attest / DeviceCheck の活用（不正利用防止）
+   
+   **ストレージ**
+   - Core Data / SwiftData の暗号化設定
+   - File Provider での共有データの保護
+   - App Groups 経由のデータ共有の安全性
+   
+   **依存関係**
+   - Swift Package Manager / CocoaPods のバージョン固定
+   - サードパーティSDKのプライバシーマニフェスト対応
+   - Deprecated API の使用
+
 ---
 
 # 出力形式（厳守）
@@ -151,6 +216,20 @@ semgrep --config auto . --json --output semgrep-report.json
 - [ ] プライバシーポリシー確認
 - [ ] 利用規約確認
 - [ ] 運用手順書作成
+
+### iOS アプリ固有の追加作業
+- [ ] **App Store 審査対策**
+  - [ ] プライバシーマニフェスト (`PrivacyInfo.xcprivacy`) の作成・更新
+  - [ ] 必要なAPI理由の宣言（Required Reason API）
+  - [ ] App Tracking Transparency の適切な実装
+- [ ] **セキュリティ設定**
+  - [ ] ATS 例外の最小化・正当化
+  - [ ] Keychain アクセスグループの確認
+  - [ ] Entitlements の最小化
+- [ ] **署名・配布**
+  - [ ] Production 証明書での署名確認
+  - [ ] リリースビルドでのデバッグ機能無効化
+  - [ ] Bitcode / dSYM の適切な設定
 
 ## E. 不明点の質問（最大5つ、優先度順）
 
