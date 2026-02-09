@@ -30,6 +30,11 @@ description: リポジトリ運用エージェント - git操作・CI・PR作成
 - 例: `feature/ISSUE-123-add-login`, `fix/ISSUE-456-api-error`
 - エージェントがベースブランチを確認して作成
 
+### 2.5 タスク別Worktree設定（自動）
+- `scripts/auto-worktree.sh [type] [description] [issue-number]` を実行
+- 既存worktreeがあれば再利用し、なければ `../wt/<repo名>/<branch>` に自動作成
+- 実装・テスト・コミットは必ず対象worktreeで実施
+
 ### 3. 実装・小刻みコミット（自動）
 - エージェントが作業単位でコミット（Conventional Commits準拠）
 - コミット例: `feat(auth): add OAuth login (#123)`
@@ -63,6 +68,15 @@ description: リポジトリ運用エージェント - git操作・CI・PR作成
 
 2. **異なるスコープの変更時**
    - 現在の作業と異なるスコープ（異なるIssue番号など）の変更を開始する場合
+
+### Worktree作成タイミング
+以下の条件を満たしたら、タスク用worktreeを作成または再利用する：
+1. **新しいタスク開始時**
+   - ブランチ決定直後に `scripts/auto-worktree.sh` を実行
+2. **並行開発開始時**
+   - 既存タスクと同時進行する場合、必ず別worktreeを使う
+3. **既存タスク再開時**
+   - `git worktree list` で対象ブランチのworktreeを探索し再利用する
 
 ### コミットタイミング
 以下のタイミングで自動コミットを行う：
@@ -127,17 +141,14 @@ feature/20260208-barcode-scanner    # ✅
 - **ビルド成功時**（これが最低限の基準）
 - 別の機能に着手する前
 
-#### 3. Git Worktreeの活用（並行開発時）
-複数機能を並行で開発する場合はworktreeを使用：
+#### 3. Git Worktreeの自動活用（並行開発時）
+複数機能を並行で開発する場合は `scripts/auto-worktree.sh` を使用：
 ```bash
-# メインのワークツリー
-/path/to/stockpile_ios          # main or develop
+# 例: feature/123-login のworktreeを作成/再利用
+./scripts/auto-worktree.sh feature "login" 123
 
-# 機能Aのワークツリー
-git worktree add ../stockpile-cloudkit feature/cloudkit
-
-# 機能Bのワークツリー  
-git worktree add ../stockpile-barcode feature/barcode
+# 出力されたパスへ移動して作業
+cd ../wt/<repo名>/feature-123-login
 ```
 
 **Worktreeのメリット:**
@@ -162,7 +173,7 @@ git stash pop
 新機能の開発を開始する前に：
 - [ ] 現在のブランチを確認（`git branch --show-current`）
 - [ ] 未コミットの変更がないか確認（`git status`）
-- [ ] 新しい機能ブランチを作成（`git switch -c feature/...`）
+- [ ] 新しい機能ブランチとworktreeを作成（`./scripts/auto-worktree.sh ...`）
 - [ ] 既存の別機能の変更がないか確認
 
 ---
@@ -190,15 +201,16 @@ git stash pop
 1. **ブランチ確認・作成**:
      - 現在の変更が新しい機能/タスクの場合、必ず新ブランチを作成して移動する
      - 誤ったブランチ（develop/mainなど）にいる場合、変更を持ったまま適切なブランチへ切り替える (`git switch -c new-branch`)
-2. ブランチの命名（`<type>/...`）
-3. 小さな変更のコミット（Conventional Commits準拠）
-3. `git push origin <branch>`（main/master以外）
-4. テスト実行、静的解析（linters）の実行
-5. PRの作成（`scripts/pr.sh` 使用、マージはしない）
-6. PR説明文・変更点の要約生成
-7. 軽微なconflict解消（事前ポリシーで許可した場合のみ、解消案をPRに記載）
-8. CIログの取得と要約
-9. 自動実行ログをPRに添付
+2. `scripts/auto-worktree.sh` によるタスク別worktreeの作成/再利用
+3. ブランチの命名（`<type>/...`）
+4. 小さな変更のコミット（Conventional Commits準拠）
+5. `git push origin <branch>`（main/master以外）
+6. テスト実行、静的解析（linters）の実行
+7. PRの作成（`scripts/pr.sh` 使用、マージはしない）
+8. PR説明文・変更点の要約生成
+9. 軽微なconflict解消（事前ポリシーで許可した場合のみ、解消案をPRに記載）
+10. CIログの取得と要約
+11. 自動実行ログをPRに添付
 
 ### 必ず人が行う（自動化しない）
 - **PRの最終レビュー & 承認**
