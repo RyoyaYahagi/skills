@@ -14,6 +14,10 @@ description: Global implementation workflow and output format rules. Use when as
 ## Git keyword handling
 - If the request includes commit/push/PR/merge/deploy keywords, invoke `$git-ops` and follow its policy before executing any git operations.
 
+## iOS Simulator Verification (Global)
+- For iOS app implementation tasks (detectable by `*.xcodeproj` or `*.xcworkspace` in the repo), ALWAYS invoke `$appium-simulator-test` after successful build and before commit/report.
+- Completion condition is NOT a smoke pass. 実装差分に紐づく機能を実操作で全件検証し、全シナリオ PASS を必須とする。
+
 ## 🚨 1機能1コミット（必須・厳守）
 
 ### ⚠️ 最重要ルール
@@ -23,10 +27,11 @@ description: Global implementation workflow and output format rules. Use when as
 機能が完了したら、以下を**この順番で**実行：
 
 1. [ ] ビルド成功を確認
-2. [ ] `git status`で変更ファイルを確認
-3. [ ] `git-ops`スキルを呼び出してコミット実行
-4. [ ] コミット完了を確認
-5. [ ] ユーザーに報告
+2. [ ] iOSアプリ実装時は`$appium-simulator-test`で「実装差分の全機能を実操作で検証し、全シナリオPASS」を確認
+3. [ ] `git status`で変更ファイルを確認
+4. [ ] `git-ops`スキルを呼び出してコミット実行
+5. [ ] コミット完了を確認
+6. [ ] ユーザーに報告
 
 ### 自動コミットのトリガー
 以下の作業が完了しビルド成功したら、**即座に**コミット：
