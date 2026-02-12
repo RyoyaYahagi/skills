@@ -9,13 +9,24 @@ ObsidianをAIエージェントのナレッジベースとして活用するス�
 
 ## Vault Location
 
-`/Users/yappa/Documents/Obsidian Vault`
+メインVault: `/Users/yappa/Documents/Obsidian/Second-brain`
 
-## Directory Structure
+### 全 Vault 一覧
+
+| Vault        | 用途                                | パス            |
+| ------------ | ----------------------------------- | --------------- |
+| Second-brain | AI セッション・Daily Note・ナレッジ | `Second-brain/` |
+| Labo         | 実験・研究                          | `Labo/`         |
+| Personal     | 個人メモ                            | `Personal/`     |
+| Tech         | 技術知識                            | `Tech/`         |
+| Work         | 仕事関連                            | `Work/`         |
+
+## Directory Structure（Second-brain）
 
 ```
-Obsidian Vault/
+Second-brain/
 ├── AI-Sessions/    # セッション記録
+├── Daily/          # Daily Note
 ├── Projects/       # プロジェクト別知識
 ├── Knowledge/      # 技術知識
 ├── Templates/      # テンプレート
