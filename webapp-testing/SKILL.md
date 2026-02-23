@@ -1,17 +1,23 @@
 ---
 name: webapp-testing
-description: Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.
+description: ローカルWebアプリ（localhost）の機能検証とE2EテストをPlaywrightで実行するスキル。サーバー起動管理、再現性のあるシナリオ、検証証跡取得を扱う。単発のブラウザCLI操作は `playwright-cli` を使用。
 license: Complete terms in LICENSE.txt
 ---
 
 # Web Application Testing
 
-To test local web applications, write native Python Playwright scripts.
+ローカルWebアプリの検証は、このスキルを第一選択にする。
 
-**Helper Scripts Available**:
-- `scripts/with_server.py` - Manages server lifecycle (supports multiple servers)
+## Scope
 
-**Always run scripts with `--help` first** to see usage. DO NOT read the source until you try running the script first and find that a customized solution is abslutely necessary. These scripts can be very large and thus pollute your context window. They exist to be called directly as black-box scripts rather than ingested into your context window.
+- 対象: `localhost` / 開発サーバー上の機能検証、E2Eシナリオ、検証証跡取得
+- 非対象: 単発の手動的ブラウザ操作（`playwright-cli` を利用）
+
+## Helper Scripts Available
+
+- `scripts/with_server.py` - サーバー起動/終了を含む実行管理（複数サーバー対応）
+
+`--help` を先に実行して使い方を確認し、必要になるまでスクリプト本体は読まない。
 
 ## Decision Tree: Choosing Your Approach
 
@@ -34,14 +40,10 @@ User task → Is it static HTML?
 
 ## Example: Using with_server.py
 
-To start a server, run `--help` first, then use the helper:
-
-**Single server:**
 ```bash
 python scripts/with_server.py --server "npm run dev" --port 5173 -- python your_automation.py
 ```
 
-**Multiple servers (e.g., backend + frontend):**
 ```bash
 python scripts/with_server.py \
   --server "cd backend && python server.py" --port 3000 \
@@ -49,53 +51,27 @@ python scripts/with_server.py \
   -- python your_automation.py
 ```
 
-To create an automation script, include only Playwright logic (servers are managed automatically):
+## Playwright Script Pattern
+
 ```python
 from playwright.sync_api import sync_playwright
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True) # Always launch chromium in headless mode
+    browser = p.chromium.launch(headless=True)
     page = browser.new_page()
-    page.goto('http://localhost:5173') # Server already running and ready
-    page.wait_for_load_state('networkidle') # CRITICAL: Wait for JS to execute
-    # ... your automation logic
+    page.goto('http://localhost:5173')
+    page.wait_for_load_state('networkidle')
+    # ... test steps ...
     browser.close()
 ```
 
-## Reconnaissance-Then-Action Pattern
-
-1. **Inspect rendered DOM**:
-   ```python
-   page.screenshot(path='/tmp/inspect.png', full_page=True)
-   content = page.content()
-   page.locator('button').all()
-   ```
-
-2. **Identify selectors** from inspection results
-
-3. **Execute actions** using discovered selectors
-
-## Common Pitfall
-
-❌ **Don't** inspect the DOM before waiting for `networkidle` on dynamic apps
-✅ **Do** wait for `page.wait_for_load_state('networkidle')` before inspection
-
 ## Best Practices
 
-- **Use bundled scripts as black boxes** - To accomplish a task, consider whether one of the scripts available in `scripts/` can help. These scripts handle common, complex workflows reliably without cluttering the context window. Use `--help` to see usage, then invoke directly. 
-- Use `sync_playwright()` for synchronous scripts
-- Always close the browser when done
-- Use descriptive selectors: `text=`, `role=`, CSS selectors, or IDs
-- Add appropriate waits: `page.wait_for_selector()` or `page.wait_for_timeout()`
+- `networkidle` 待機後にDOM検査を行う
+- セレクタは意味的に安定したものを優先する
+- 実行ごとに結果を比較できる証跡（ログ/スクリーンショット）を残す
 
-## Reference Files
+## Coordination
 
-- **examples/** - Examples showing common patterns:
-  - `element_discovery.py` - Discovering buttons, links, and inputs on a page
-  - `static_html_automation.py` - Using file:// URLs for local HTML
-  - `console_logging.py` - Capturing console logs during automation
-
-## 他スキルとの連携
-
-- **webapp-fullstack**: フルスタックアプリ実装後のe2eテスト
-- **web-artifacts-builder**: 生成したHTMLアーティファクトの自動テスト
+- ブラウザ操作を対話的に進めるだけなら `playwright-cli` を使う。
+- コンソール/ネットワーク中心の原因解析は `web-devtools-debug` を使う。

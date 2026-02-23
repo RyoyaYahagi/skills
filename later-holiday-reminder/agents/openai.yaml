@@ -1,0 +1,4 @@
+interface:
+  display_name: "あとで休み日登録"
+  short_description: "「あとで ○○」を直近の休み日に自動でReminders登録する運用スキル。"
+  default_prompt: "Use $later-holiday-reminder to parse \"あとで ...\" input, find the next holiday from Google Calendar, and add one Apple Reminder on that day."

@@ -55,5 +55,7 @@ description: Global implementation workflow and output format rules. Use when as
 2. 未コミットの変更をコミット
 3. ユーザーに謝罪と報告
 
-## Output language
-- Respond in Japanese unless the user explicitly asks otherwise.
+## Output language & Enforce Japanese (CRITICAL)
+- 常に **100% 日本語 (Japanese)** で出力すること。英語で説明を行わないこと。
+- Gemini 3.1 Pro等のモデルは、コードやログの英語コンテキストに引きずられやすい特性があります。これを防ぐため、出力時は常に「自分は日本語で話すアシスタントである」と再認識してください。
+- 必要に応じて `$force-japanese` スキルを参照し、その絶対ルールに従うこと。

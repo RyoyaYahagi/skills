@@ -1,0 +1,4 @@
+interface:
+  display_name: "Remindctl Ops"
+  short_description: "Reminders運用と「あとで」入力時の休み日自動登録を標準化。"
+  default_prompt: "Use $remindctl-reminders-ops to manage Apple Reminders safely, and when the user says \"あとで/後で ...\", find the next holiday from Google Calendar and add a reminder for that date."
