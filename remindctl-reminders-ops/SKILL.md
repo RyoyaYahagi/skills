@@ -58,6 +58,7 @@ Apple Reminders の操作を `remindctl` で安定実行する。
 
 1. 実行
 - `node /Users/yappa/code/skills/later-holiday-reminder/scripts/later_holiday_reminder.mjs --input "あとで 〇〇" --account <mail> --apply`
+- このスクリプトは既定でTerminal.app自動実行を行う（Apple Reminders権限問題の回避）。Terminal.appでは新規タブで実行される。
 
 2. 注意
 - サンドボックス環境では `gog` の keychain 参照が制限される場合がある

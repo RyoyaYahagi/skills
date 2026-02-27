@@ -46,12 +46,12 @@
 ### Searching Knowledge
 
 ```
-1. Use search-vault with relevant keywords
+1. Use obsidian search with relevant keywords
 2. If found:
-   - Read note with read-note
+   - Read note with obsidian read
    - Reference in current session
 3. If not found:
-   - Create new knowledge note
+   - Create new knowledge note with obsidian write --create
    - Link to relevant projects/sessions
 ```
 

@@ -23,6 +23,8 @@ function printHelp() {
   --due-time          追加時刻 HH:mm (default: 14:00)
   --fixed-spacing     学習間隔を使わず固定間隔（分）を使う
   --profile           学習プロファイルJSONパス
+  --no-terminal-auto  Terminal.app自動起動を無効化
+  --terminal-timeout-seconds Terminal.app実行完了待機秒数 (default: 300)
   --all-day-only      終日イベントのみ休み扱い
   --apply             実際にリマインダー追加
   --dry-run           追加せず計画のみ表示（default）
@@ -46,6 +48,8 @@ function parseArgs(argv) {
     dueTime: '14:00',
     fixedSpacing: 0,
     profilePath: defaultProfilePath(),
+    terminalAuto: true,
+    terminalTimeoutSeconds: 300,
     allDayOnly: false,
     apply: false,
   };
@@ -117,6 +121,15 @@ function parseArgs(argv) {
       i += 1;
       continue;
     }
+    if (arg === '--no-terminal-auto' || arg === '--no-iterm-auto') {
+      opts.terminalAuto = false;
+      continue;
+    }
+    if (arg === '--terminal-timeout-seconds' || arg === '--iterm-timeout-seconds') {
+      opts.terminalTimeoutSeconds = Number.parseInt(argv[i + 1] ?? '', 10);
+      i += 1;
+      continue;
+    }
     if (arg === '--all-day-only') {
       opts.allDayOnly = true;
       continue;
@@ -148,6 +161,9 @@ function parseArgs(argv) {
   validateHm(opts.dueTime, '--due-time');
   if (!Number.isFinite(opts.fixedSpacing) || opts.fixedSpacing < 0) {
     throw new Error('--fixed-spacing は 0 以上の整数で指定してください。');
+  }
+  if (!Number.isFinite(opts.terminalTimeoutSeconds) || opts.terminalTimeoutSeconds <= 0) {
+    throw new Error('--terminal-timeout-seconds は 1 以上の整数で指定してください。');
   }
 
   return opts;
@@ -206,6 +222,106 @@ function defaultProfilePath() {
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
+}
+
+function shellQuote(value) {
+  const raw = String(value ?? '');
+  return `'${raw.replace(/'/g, `'\\''`)}'`;
+}
+
+function escapeAppleScriptString(value) {
+  return String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"');
+}
+
+function removeFileQuietly(filePath) {
+  try {
+    if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  } catch {
+    // no-op
+  }
+}
+
+function runInTerminalAndWait(rawArgs, timeoutSeconds) {
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'later-holiday-reminder-'));
+  const outPath = path.join(tmpRoot, 'stdout.log');
+  const statusPath = path.join(tmpRoot, 'status.txt');
+  const childCommand = [
+    'LHR_TERMINAL_CHILD=1',
+    shellQuote(process.execPath),
+    shellQuote(process.argv[1]),
+    ...rawArgs.map((arg) => shellQuote(arg)),
+    '>',
+    shellQuote(outPath),
+    '2>&1;',
+    'printf',
+    '%s',
+    '$?',
+    '>',
+    shellQuote(statusPath),
+  ].join(' ');
+
+  const scriptLines = [
+    'tell application "Terminal"',
+    '  activate',
+    '  if (count of windows) = 0 then',
+    `    do script "${escapeAppleScriptString(childCommand)}"`,
+    '  else',
+    `    do script "${escapeAppleScriptString(childCommand)}" in front window`,
+    '  end if',
+    'end tell',
+  ];
+
+  try {
+    const args = scriptLines.flatMap((line) => ['-e', line]);
+    execFileSync('osascript', args, {
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      timeout: 120000,
+    });
+  } catch (error) {
+    removeFileQuietly(outPath);
+    removeFileQuietly(statusPath);
+    throw new Error(`Terminal.app自動起動に失敗しました: ${error?.stderr?.toString?.() ?? String(error)}`);
+  }
+
+  const deadline = Date.now() + timeoutSeconds * 1000;
+  while (!fs.existsSync(statusPath)) {
+    if (Date.now() > deadline) {
+      removeFileQuietly(outPath);
+      removeFileQuietly(statusPath);
+      throw new Error(`Terminal.app実行がタイムアウトしました (${timeoutSeconds}秒)。`);
+    }
+    sleepMilliseconds(500);
+  }
+
+  let outText = '';
+  let exitCode = 1;
+  try {
+    outText = fs.existsSync(outPath) ? fs.readFileSync(outPath, 'utf8') : '';
+    const codeText = fs.readFileSync(statusPath, 'utf8').trim();
+    const parsed = Number.parseInt(codeText, 10);
+    if (Number.isFinite(parsed)) exitCode = parsed;
+  } finally {
+    removeFileQuietly(outPath);
+    removeFileQuietly(statusPath);
+    try {
+      fs.rmdirSync(tmpRoot);
+    } catch {
+      // no-op
+    }
+  }
+
+  if (outText) process.stdout.write(outText);
+  process.exit(exitCode);
+}
+
+function maybeRunViaTerminal(opts, rawArgs) {
+  if (!opts.terminalAuto) return;
+  if (process.env.LHR_TERMINAL_CHILD === '1') return;
+  if (process.env.TERM_PROGRAM === 'Apple_Terminal') return;
+  runInTerminalAndWait(rawArgs, opts.terminalTimeoutSeconds);
 }
 
 function sleepMilliseconds(ms) {
@@ -561,7 +677,9 @@ function formatAddArgs({ title, dueDate, listName, notes }) {
 }
 
 function main() {
-  const opts = parseArgs(process.argv.slice(2));
+  const rawArgs = process.argv.slice(2);
+  const opts = parseArgs(rawArgs);
+  maybeRunViaTerminal(opts, rawArgs);
   const title = extractTaskTitle(opts.input, opts.title);
 
   const events = runGogJson(
@@ -616,22 +734,10 @@ function main() {
     return;
   }
 
-  const notes = [
-    '自動追加: 「あとで」入力',
-    opts.input ? `入力: ${opts.input}` : '',
-    `休み日: ${holidayDate}`,
-    `追加時刻: ${dueDateTime}`,
-    `想定所要時間: ${estimatedMinutes}分`,
-    `調整間隔: ${gapMinutes}分`,
-  ]
-    .filter(Boolean)
-    .join('\n');
-
   const addArgs = formatAddArgs({
     title,
     dueDate: dueDateTime,
     listName: opts.list,
-    notes,
   });
 
   console.log(`重複判定: 追加対象`);

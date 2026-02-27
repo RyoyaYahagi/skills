@@ -19,7 +19,7 @@ ObsidianをAIエージェントのナレッジベースとして活用するス�
 | Labo         | 実験・研究                          | `Labo/`         |
 | Personal     | 個人メモ                            | `Personal/`     |
 | Tech         | 技術知識                            | `Tech/`         |
-| Work         | 仕事関連                            | `Work/`         |
+| Work         | 就活関連                            | `Work/`         |
 
 ## Directory Structure（Second-brain）
 
@@ -33,24 +33,24 @@ Second-brain/
 └── MOC/            # 索引ページ
 ```
 
-## MCP Tools
+## Obsidian CLI Operations
 
-Obsidian MCP serverの以下のツールを使用:
+Obsidian CLI の以下の操作を使用:
 
-| Tool               | Description      |
-| ------------------ | ---------------- |
-| `read-note`        | ノート読み取り   |
-| `create-note`      | ノート作成       |
-| `edit-note`        | ノート編集       |
-| `search-vault`     | Vault内検索      |
-| `add-tags`         | タグ追加         |
-| `create-directory` | ディレクトリ作成 |
+| Operation        | CLI Example                                                                 | Description      |
+| ---------------- | --------------------------------------------------------------------------- | ---------------- |
+| `read-note`      | `obsidian read --vault Second-brain --file "Daily/2026-02-27.md"`          | ノート読み取り   |
+| `create-note`    | `obsidian write --vault Second-brain --file "AI-Sessions/xxx.md" --create` | ノート作成       |
+| `edit-note`      | `obsidian write --vault Second-brain --file "AI-Sessions/xxx.md" --append` | ノート編集       |
+| `search-vault`   | `obsidian search --vault Second-brain --query "SwiftUI 状態管理"`          | Vault内検索      |
+| `add-tags`       | `obsidian tags add --vault Second-brain --file "Knowledge/xxx.md" --tag x` | タグ追加         |
+| `create-folder`  | `obsidian mkdir --vault Second-brain --path "Projects/new-project"`         | ディレクトリ作成 |
 
 ## Workflows
 
 ### セッション開始時
 
-1. 新規セッションノートを `AI-Sessions/YYYY-MM-DD-{project}.md` に作成
+1. `obsidian write --create` で新規セッションノートを `AI-Sessions/YYYY-MM-DD-{project}.md` に作成
 2. テンプレート `Templates/session.md` を使用
 3. プロジェクトページにセッションリンクを追加
 
@@ -68,9 +68,9 @@ Obsidian MCP serverの以下のツールを使用:
 
 ### 知識検索
 
-1. `search-vault` でキーワード検索
-2. 関連ノートを `read-note` で読み取り
-3. 必要に応じて `Knowledge/` に新規追加
+1. `obsidian search` でキーワード検索
+2. 関連ノートを `obsidian read` で読み取り
+3. 必要に応じて `obsidian write --create` で `Knowledge/` に新規追加
 
 ## Templates
 

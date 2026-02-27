@@ -39,6 +39,8 @@ description: "ユーザーが『あとで 〇〇』や『後で 〇〇』の形�
 4. Apple Remindersへ登録する。
 - 既存重複（同一タイトル + 同一期限日）を確認し、重複時は追加しない。
 - 追加時刻は既定 `14:00`。同日の既存タスクとの間隔を学習値で調整し、`YYYY-MM-DD HH:mm` で登録する。
+- Apple Reminders権限ダイアログ問題の回避のため、**`あとで` フローはTerminal.appで実行**する（必要に応じて自動起動）。Terminal.app起動時は既存ウィンドウの新規タブで実行する。
+- 内部メタ情報（自動追加理由、入力文、想定所要時間、間隔など）はタスク本文に書き込まず、内部処理のみで利用する。
 - `Mach error 4099` は最大3回（0.5s, 1s, 2s）で自動再試行する。
 
 ## Sandbox / 実行失敗対策（再発防止）
@@ -47,7 +49,7 @@ Codex等のサンドボックス環境では次の失敗が起きやすい。
 
 - `gog calendar ...` が `No auth for calendar ...` で失敗する  
   - 原因: `keychain` 参照がサンドボックス内で制限されることがある
-  - 対策: **サンドボックス外（escalated）で実行**する
+  - 対策: **Terminal.app経由またはサンドボックス外（escalated）で実行**する
 - `remindctl_retry.sh` が `mktemp ... Operation not permitted` で失敗する
   - 原因: 一時ディレクトリへの書き込み制限
   - 対策: **サンドボックス外（escalated）で実行**する
@@ -59,6 +61,7 @@ Codex等のサンドボックス環境では次の失敗が起きやすい。
 - `gog` / `remindctl` の検証は最初に `dry-run` で確認
 - 失敗時は環境変数で回避しようとせず、まず実行権限（sandbox/escalation）を確認
 - トークンを `/tmp` に書き出した場合は検証後に必ず削除
+- Apple Reminders権限問題がある環境では、`--no-terminal-auto` を付けずにTerminal.app自動実行を使う
 
 ## 所要時間推定と学習
 
@@ -89,6 +92,8 @@ node scripts/later_holiday_reminder.mjs \
 - `--work-keywords`: 仕事予定キーワード（既定: `研究室`）
 - `--fixed-spacing`: 学習間隔を使わず固定間隔（分）を使用
 - `--profile`: 学習プロファイルJSONパスを指定
+- `--no-terminal-auto`: Terminal.app自動起動を無効化（通常は使わない）
+- `--terminal-timeout-seconds`: Terminal.app実行完了待機秒数
 - `--dry-run`: 追加せず計画のみ表示（既定）
 
 ## Expected Output
