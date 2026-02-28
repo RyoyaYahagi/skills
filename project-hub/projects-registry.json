@@ -1,0 +1,99 @@
+{
+  "projects": [
+    {
+      "name": "FoodStock",
+      "workDirs": [
+        "/Users/yappa/code/app/foodstock"
+      ],
+      "keywords": [
+        "FoodStock",
+        "食品在庫",
+        "在庫管理アプリ",
+        "レシピ管理",
+        "買い物リスト",
+        "食材管理"
+      ],
+      "obsidianPath": "Projects/FoodStock",
+      "status": "active",
+      "description": "iOS食品在庫管理アプリ"
+    },
+    {
+      "name": "skills",
+      "workDirs": [
+        "/Users/yappa/code/skills"
+      ],
+      "keywords": [
+        "スキル作成",
+        "スキル改善",
+        "SKILL.md",
+        "skill-creator"
+      ],
+      "obsidianPath": "Projects/skills",
+      "status": "active",
+      "description": "AIエージェント用スキル管理"
+    },
+    {
+      "name": "sc-experiment",
+      "workDirs": [
+        "/Users/yappa/code/python/sc_exp"
+      ],
+      "keywords": [
+        "符号制約",
+        "sign constraint",
+        "sc_exp",
+        "UCI",
+        "データセット実験"
+      ],
+      "obsidianPath": "Projects/sc-experiment",
+      "status": "active",
+      "description": "符号制約付き回帰の実験プロジェクト"
+    },
+    {
+      "name": "chrome-extensions",
+      "workDirs": [
+        "/Users/yappa/code/chrome-extension"
+      ],
+      "keywords": [
+        "Chrome拡張",
+        "chrome-extension",
+        "拡張機能",
+        "sidepanel",
+        "gemini-folder"
+      ],
+      "obsidianPath": "Projects/chrome-extensions",
+      "status": "active",
+      "description": "Chrome拡張機能群"
+    },
+    {
+      "name": "stockpile-manager",
+      "workDirs": [
+        "/Users/yappa/code/app/stockpile_manager",
+        "/Users/yappa/code/app/stockpile_ios"
+      ],
+      "keywords": [
+        "stockpile",
+        "ストックパイル",
+        "備蓄管理"
+      ],
+      "obsidianPath": "Projects/stockpile-manager",
+      "status": "active",
+      "description": "iOS備蓄管理アプリ"
+    },
+    {
+      "name": "todo-swiftui",
+      "workDirs": [
+        "/Users/yappa/code/app/todo-swiftui",
+        "/Users/yappa/code/app/todo-ios",
+        "/Users/yappa/code/app/todo"
+      ],
+      "keywords": [
+        "todo-swiftui",
+        "Todo",
+        "TCA"
+      ],
+      "obsidianPath": "Projects/todo-swiftui",
+      "status": "active",
+      "description": "SwiftUI Todo app with TCA architecture"
+    }
+  ]
+}
