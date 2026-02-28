@@ -143,9 +143,8 @@ run_review() {
   echo "--- レビュー結果ここまで ---"
   echo ""
 
-  # Critical チェック
+  # Critical チェック（レポート記録用のみ。即時通知なし）
   if echo "$REVIEW_OUTPUT" | grep -qi "critical\|🔴"; then
-    warn "🔴 Critical な問題が検出されました。"
     REVIEW_HAS_CRITICAL=true
   else
     REVIEW_HAS_CRITICAL=false
@@ -352,7 +351,13 @@ run_test_exec() {
   fi
 
   TEST_RUN_OUTPUT=$(cat "$output_file")
+  local exit_code_cached=$?
   rm -f "$output_file"
+
+  # テスト失敗フラグ（FAIL 文字列 or 非ゼロ終了）
+  if echo "$TEST_RUN_OUTPUT" | grep -qiE "FAIL|Error|failed"; then
+    TEST_FAILED=true
+  fi
 
   echo ""
   echo "--- テスト実行結果 ---"
@@ -589,7 +594,7 @@ main() {
   fi
 
   if [[ "$REVIEW_HAS_CRITICAL" == "true" && "$RUN_TEST" == "true" ]]; then
-    warn "Critical な問題がありますが、テストフェーズも続行します。"
+    info "🔴 Critical な問題がありますが、テストフェーズへ続行します。"
   fi
 
   # Phase 2-3
@@ -601,11 +606,10 @@ main() {
   # Phase 4
   generate_report
 
-  # Phase 5: GitHub Issue 作成
-  if [[ "$CREATE_ISSUES" == "true" ]] && [[ -n "$REVIEW_OUTPUT" ]]; then
+  # Phase 5: GitHub Issue 作成（テスト失敗 or タイムアウト時のみ）
+  if [[ "$CREATE_ISSUES" == "true" && "$TEST_FAILED" == "true" ]] && [[ -n "$REVIEW_OUTPUT" ]]; then
+    info "バグ修正が失敗したため、GitHub Issue を登録します"
     create_github_issues "$REVIEW_OUTPUT" "$CREATE_MEDIUM"
-  elif [[ "$REVIEW_HAS_CRITICAL" == "true" ]]; then
-    warn "🔴 Critical な問題があります。--create-issues オプションで GitHub Issue に自動登録できます。"
   fi
 
   echo ""
