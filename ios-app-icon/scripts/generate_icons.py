@@ -61,8 +61,8 @@ def generate_icon(master_image: Image.Image, size: int, output_path: Path) -> No
 def generate_legacy_icons(
     master_path: Path,
     output_dir: Path,
-    dark_path: Path | None = None,
-    tinted_path: Path | None = None,
+    dark_path=None,
+    tinted_path=None,
 ) -> dict:
     """Generate all icon sizes in legacy format."""
     master = Image.open(master_path).convert("RGBA")
@@ -121,8 +121,8 @@ def generate_legacy_icons(
 def generate_modern_icons(
     master_path: Path,
     output_dir: Path,
-    dark_path: Path | None = None,
-    tinted_path: Path | None = None,
+    dark_path=None,
+    tinted_path=None,
 ) -> dict:
     """Generate icons in modern single-asset format (Xcode 14+)."""
     master = Image.open(master_path).convert("RGBA")

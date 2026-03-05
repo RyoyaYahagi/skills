@@ -5,25 +5,62 @@
 ### Starting a Session
 
 ```
-1. Check current project context
-2. Create session note:
-   - Path: AI-Sessions/YYYY-MM-DD-{project}.md
-   - Use template from Templates/session.md
-   - Fill in: date, project name, initial goals
-3. Link session to project page:
-   - Add to Projects/{project}/_Index.md → Sessions section
+1. Detect current project context via project-hub
+2. Read project notes first:
+   - Projects/{project}/_Index.md
+   - Projects/{project}/tasks.md
+   - Projects/{project}/progress-log.md
+   - Projects/{project}/decisions.md
+   - Projects/{project}/failures.md
+3. Resolve today's session note path:
+   - AI-Sessions/YYYY-MM-DD-{project}.md
+4. If note exists, append (do not recreate)
+5. If note does not exist, create using Templates/session.md
+6. Add session link to Projects/{project}/_Index.md (only if missing)
+7. Write start log:
+   - task goal
+   - referenced notes
+   - carry-over tasks
+```
+
+## Morning Daily Workflow
+
+### Trigger: 「おはよう」「朝」「今日のタスク」「Daily」「今日の予定」
+
+```
+1. Determine today's note path:
+   - Daily/YYYY-MM-DD.md
+2. Try reading today's note:
+   - obsidian read vault=Second-brain path="Daily/YYYY-MM-DD.md"
+3. If note does not exist, create it:
+   - obsidian create vault=Second-brain path="Daily/YYYY-MM-DD.md" content="..."
+4. Read yesterday's daily note and extract carry-over tasks:
+   - obsidian read vault=Second-brain path="Daily/YYYY-MM-DD.md" (yesterday)
+5. Search unfinished checklist items across all vaults (`Second-brain`, `Labo`, `Personal`, `Tech`, `Job-hunting`):
+   - Use vault search with `- [ ]` queries and collect open TODOs
+   - Deduplicate similar items before adding
+6. Select about 3 tasks for `## 今日のタスク` from collected candidates:
+   - Aim for 1 highest-priority task + up to 2 important tasks
+7. Add imported tasks as checklist items under `## 取り込みタスク`, including both sources:
+   - Previous day carry-overs
+   - Unfinished TODOs from other vaults
+   - obsidian append vault=Second-brain path="Daily/YYYY-MM-DD.md" content="- [ ] Task"
+8. Return created/updated note path, imported sources, and selected 3 tasks in response
 ```
 
 ### During Session
 
 ```
-1. Update Progress section:
-   - Move items from "In Progress" to "Completed"
-   - Add new discoveries to "Discoveries"
-2. Record changes:
+1. Update session note on each milestone:
+   - Plan fixed
+   - Implementation done
+   - Tests done
+   - Commit done
+2. Update Projects/{project}/progress-log.md for significant milestones
+3. Record changes in session note:
    - Add to "Changes Made" table
    - Format: | file | type | description |
-3. Add knowledge notes:
+4. Add knowledge notes:
    - If reusable knowledge found, create Knowledge/{category}/{topic}.md
    - Link from session note
 ```
@@ -51,7 +88,7 @@
    - Read note with obsidian read
    - Reference in current session
 3. If not found:
-   - Create new knowledge note with obsidian write --create
+   - Create new knowledge note with obsidian create
    - Link to relevant projects/sessions
 ```
 

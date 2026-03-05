@@ -14,6 +14,13 @@ Obsidian Second-Brain の `Projects/` フォルダを使い、プロジェクト
 - Templates: `Templates/`
 - レジストリ: このスキルの `projects-registry.json`
 
+## 既存ノート優先ポリシー（必須）
+
+- プロジェクトが判定できたら、まず `Projects/{project-name}/` の既存ノートを読み取り、差分追記で運用する。
+- 既存ノートがあるのに新規ノートを重複作成してはいけない。
+- 必須ノート（`_Index.md`, `tasks.md`, `progress-log.md`, `decisions.md`, `failures.md`）のうち不足ファイルのみ作成する。
+- `AI-Sessions/YYYY-MM-DD-{project}.md` は同日分があれば追記し、なければ作成する。
+
 ## プロジェクト自動判定（3段階）
 
 ユーザーが作業中のプロジェクトを以下の優先順で判定する。
@@ -127,11 +134,24 @@ Projects/{project-name}/
 
 ## 暗黙の適用
 
-以下のスキルが動作する際、プロジェクト判定を自動で行い、関連ノートの更新を検討する：
+以下のスキルが動作する際、プロジェクト判定と関連ノート更新を**必須実行**する：
 
 - `obsidian-brain` のセッション記録時 → 進捗ログに追記
 - `implementation-rules` の実装完了時 → タスクの状態更新
 - `git-ops` のコミット時 → 進捗ログに追記
+
+## コンテキスト読込セット（実装/調査の開始時）
+
+開始時に最低限以下を読む：
+
+1. `Projects/{project}/_Index.md`
+2. `Projects/{project}/tasks.md`
+3. `Projects/{project}/progress-log.md`
+4. `Projects/{project}/decisions.md`
+5. `Projects/{project}/failures.md`
+6. `AI-Sessions/YYYY-MM-DD-{project}.md`（存在時）
+
+読み取り後、今回のタスクと関連する未完了項目を `tasks.md` で確認し、開始ログを `progress-log.md` とセッションノートへ追記する。
 
 ## references
 

@@ -1,6 +1,6 @@
 ---
 name: codex-test-delegate
-description: Codex CLI以外のAI（Gemini, Claude等）で実装作業中、テストフェーズに入った際にCodex CLIへバグチェック・テストケース作成・テスト実行を委譲するスキル。PRレビュー・品質チェック後に問題点をGitHub Issueとして自動登録する機能も備える。テスト完了まで自動で回し、結果をレポートする。トリガー：「テストして」「テスト作成」「バグチェック」「Codexでテスト」「テストケース作成」「テスト実行」「codex test」「品質チェック」「PRレビュー」「PRをレビュー」「issueを作成」「Issueに起票」「Githubに登録」。実装完了後のテストフェーズで自動適用を推奨。
+description: Codex CLI以外のAI（Gemini, Claude等）で実装作業中、テストフェーズに入った際にCodex CLIへバグチェック・テストケース作成・テスト実行を委譲するスキル。PRレビュー・品質チェック後、未解決バグや追加機能提案をGitHub Issueとして自動登録する機能も備える。テスト完了まで自動で回し、結果をレポートする。トリガー：「テストして」「テスト作成」「バグチェック」「Codexでテスト」「テストケース作成」「テスト実行」「codex test」「品質チェック」「PRレビュー」「PRをレビュー」「issueを作成」「Issueに起票」「Githubに登録」。実装完了後のテストフェーズで自動適用を推奨。
 ---
 
 # Codex Test Delegate
@@ -27,7 +27,7 @@ Phase 3: テスト実行 & 修正ループ
     ↓ 全件PASSまで自動修正
 Phase 4: 結果レポート
     ↓
-Phase 5: GitHub Issue 自動作成 ※ バグ修正失敗時のみ
+Phase 5: GitHub Issue 自動作成 ※ 未解決バグ/追加機能提案を登録
 ```
 
 ---
@@ -188,13 +188,20 @@ codex exec --full-auto -C "$PROJECT_ROOT" \
 - 実行したテストコマンド
 - テスト結果サマリ（PASS数 / FAIL数 / SKIP数）
 - 修正した箇所の一覧（修正した場合）
-- 全テストPASSしたかどうか"
+- 全テストPASSしたかどうか
+- 未解決バグ一覧（なければ「なし」）
+- テスト中に見つかった追加機能提案一覧（なければ「なし」）"
 ```
 
 ### タイムアウト
 
 - Phase 3 は最大 **10分** でタイムアウト
 - タイムアウトした場合はその時点の状態をユーザーに報告
+
+### Issue化ルール（テスト時）
+
+- 直せなかったバグ（テスト失敗が残る/タイムアウト）は必ず Issue を作成する。
+- テスト中に「追加したほうがよい機能」を発見した場合も Issue を作成する（`enhancement` ラベル推奨）。
 
 ---
 
@@ -231,11 +238,14 @@ codex exec --full-auto -C "$PROJECT_ROOT" \
 
 ## Phase 5: GitHub Issue 自動作成
 
-**バグ修正が失敗した場合のみ** Issue を登録する。Phase 3 のテスト実行で失敗数が残った場合や、タイムアウトした場合にトリガーされる。
+以下のいずれかに該当した場合、Issue を登録する。
 
-> ただレビューで問題が見つかっただけでは Issue を作成しない。「Codex が修正を試みたが失敗した」問題だけを登録する。
+1. **直せなかったバグ**: Phase 3 のテスト実行で失敗数が残った、またはタイムアウトした。
+2. **追加すべき機能**: テスト中に改善価値が高い機能追加案が見つかった。
 
-- **作成 Issue 数**: <N>件
+> レビューで見つかった指摘だけを機械的にIssue化するのではなく、テスト実行結果と再現情報を含むIssueを優先する。
+
+- **作成 Issue 数**: <N>件（内訳: bug=<N>, enhancement=<N>）
 - **Issue URL 一覧**: <URL>
 
 ## 次のアクション
@@ -275,7 +285,7 @@ bash <skill-path>/scripts/run_codex_test.sh --pr 42 --review-only
 # PR レビュー + テスト（全フェーズ）
 bash <skill-path>/scripts/run_codex_test.sh --pr 42 --base main
 
-# バグ修正失敗時のみ GitHub Issue 自動登録
+# テスト失敗バグや追加機能提案を GitHub Issue 自動登録
 bash <skill-path>/scripts/run_codex_test.sh --create-issues
 
 # Medium 以上の修正失敗問題も Issue 化

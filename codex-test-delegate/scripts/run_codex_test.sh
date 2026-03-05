@@ -332,7 +332,9 @@ run_test_exec() {
 - 実行したテストコマンド
 - テスト結果サマリ（PASS数 / FAIL数 / SKIP数）
 - 修正した箇所の一覧（修正した場合）
-- 全テストPASSしたかどうか"
+- 全テストPASSしたかどうか
+- 直せなかったバグがあれば `ISSUE_BUG: <短いタイトル> | <再現手順・失敗内容>` を1行1件で出力（なければ `ISSUE_BUG: なし`）
+- テスト中に追加すべき機能があれば `ISSUE_ENHANCEMENT: <短いタイトル> | <追加理由・期待価値>` を1行1件で出力（なければ `ISSUE_ENHANCEMENT: なし`）"
 
   local output_file
   output_file=$(mktemp /tmp/codex-testrun-XXXXXX.txt)
@@ -351,7 +353,6 @@ run_test_exec() {
   fi
 
   TEST_RUN_OUTPUT=$(cat "$output_file")
-  local exit_code_cached=$?
   rm -f "$output_file"
 
   # テスト失敗フラグ（FAIL 文字列 or 非ゼロ終了）
@@ -359,11 +360,44 @@ run_test_exec() {
     TEST_FAILED=true
   fi
 
+  extract_test_issue_candidates "$TEST_RUN_OUTPUT"
+
   echo ""
   echo "--- テスト実行結果 ---"
   echo "$TEST_RUN_OUTPUT"
   echo "--- テスト実行結果ここまで ---"
   echo ""
+}
+
+# ==============================================================================
+# テスト結果から Issue 候補を抽出
+# ==============================================================================
+extract_test_issue_candidates() {
+  local test_output="$1"
+  TEST_ISSUE_BUG_LINES=""
+  TEST_ISSUE_ENHANCEMENT_LINES=""
+  TEST_HAS_ISSUE_CANDIDATES=false
+
+  while IFS= read -r line; do
+    case "$line" in
+      ISSUE_BUG:*)
+        local payload
+        payload=$(echo "${line#ISSUE_BUG:}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+        if [[ -n "$payload" && "$payload" != "なし" ]]; then
+          TEST_ISSUE_BUG_LINES+="$payload"$'\n'
+          TEST_HAS_ISSUE_CANDIDATES=true
+        fi
+        ;;
+      ISSUE_ENHANCEMENT:*)
+        local payload
+        payload=$(echo "${line#ISSUE_ENHANCEMENT:}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+        if [[ -n "$payload" && "$payload" != "なし" ]]; then
+          TEST_ISSUE_ENHANCEMENT_LINES+="$payload"$'\n'
+          TEST_HAS_ISSUE_CANDIDATES=true
+        fi
+        ;;
+    esac
+  done <<< "$test_output"
 }
 
 # ==============================================================================
@@ -395,6 +429,10 @@ ${REVIEW_OUTPUT:-実行されませんでした}
   fi
 
   if [[ "${RUN_TEST:-true}" == "true" ]]; then
+    local bug_candidate_count enhancement_candidate_count
+    bug_candidate_count=$(printf "%s" "${TEST_ISSUE_BUG_LINES:-}" | awk 'NF {c++} END {print c+0}')
+    enhancement_candidate_count=$(printf "%s" "${TEST_ISSUE_ENHANCEMENT_LINES:-}" | awk 'NF {c++} END {print c+0}')
+
     report+="
 ## Phase 2: テストケース作成
 \`\`\`
@@ -405,6 +443,9 @@ ${TEST_GEN_OUTPUT:-実行されませんでした}
 \`\`\`
 ${TEST_RUN_OUTPUT:-実行されませんでした}
 \`\`\`
+
+- **Issue候補（未解決バグ）**: ${bug_candidate_count}件
+- **Issue候補（追加機能）**: ${enhancement_candidate_count}件
 "
   fi
 
@@ -459,10 +500,13 @@ create_github_issues() {
 
   # 必要なラベルを事前作成
   gh label create "codex-detected" --color "0075ca" --description "Codex CLI による自動検出" 2>/dev/null || true
+  gh label create "test-detected"  --color "1d76db" --description "テスト実行で検出"             2>/dev/null || true
   gh label create "critical"       --color "d73a4a" --description "Critical severity"         2>/dev/null || true
   gh label create "high-priority"  --color "e4e669" --description "High severity"             2>/dev/null || true
 
   local issue_count=0
+  ISSUE_BUG_COUNT=0
+  ISSUE_ENH_COUNT=0
   local current_title=""
   local current_body=""
   local current_labels=""
@@ -480,7 +524,7 @@ create_github_issues() {
     fi
 
     local full_body
-    full_body="$(echo -e "$b")\n\n---\n*この Issue は Codex CLI による自動レビューで検出されました*"
+    full_body="$(echo -e "$b")\n\n---\n*この Issue は Codex CLI の自動レビュー/テストで検出されました*"
 
     local label_args=()
     IFS=',' read -ra la <<< "$l"
@@ -494,6 +538,11 @@ create_github_issues() {
       success "Issue 作成: $url"
       ISSUE_URLS+="  $url\n"
       issue_count=$((issue_count + 1))
+      if echo ",$l," | grep -q ",enhancement,"; then
+        ISSUE_ENH_COUNT=$((ISSUE_ENH_COUNT + 1))
+      else
+        ISSUE_BUG_COUNT=$((ISSUE_BUG_COUNT + 1))
+      fi
     else
       warn "Issue「$t」の作成に失敗しました"
     fi
@@ -526,10 +575,53 @@ create_github_issues() {
   # 最後のアイテムをフラッシュ
   _flush_issue "$current_title" "$current_body" "$current_labels"
 
+  # テスト実行で抽出した未解決バグ候補を Issue 化
+  local extracted_bug_count=0
+  while IFS= read -r candidate; do
+    [[ -z "$candidate" ]] && continue
+    extracted_bug_count=$((extracted_bug_count + 1))
+
+    local bug_title bug_detail
+    if [[ "$candidate" == *"|"* ]]; then
+      bug_title=$(echo "${candidate%%|*}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+      bug_detail=$(echo "${candidate#*|}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    else
+      bug_title=$(echo "$candidate" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+      bug_detail="詳細はテストログを参照"
+    fi
+
+    [[ -z "$bug_title" ]] && bug_title="テストで未解決の不具合"
+    _flush_issue "[Test][Bug] $bug_title" "## テストで解消できなかったバグ\n$bug_detail" "bug,high-priority,codex-detected,test-detected"
+  done <<< "${TEST_ISSUE_BUG_LINES:-}"
+
+  # FAIL が残ったが個別候補が無い場合はフォールバックで 1件作成
+  if [[ "${TEST_FAILED:-false}" == "true" && $extracted_bug_count -eq 0 ]]; then
+    local fail_excerpt
+    fail_excerpt=$(printf "%s" "${TEST_RUN_OUTPUT:-}" | sed -n '1,120p')
+    _flush_issue "[Test][Bug] 自動修正で解消できないテスト失敗が残存" "## 概要\nテスト実行後も失敗が残りました。\n\n## テストログ抜粋\n\`\`\`\n$fail_excerpt\n\`\`\`" "bug,high-priority,codex-detected,test-detected"
+  fi
+
+  # テスト中に見つかった追加機能提案を Issue 化
+  while IFS= read -r candidate; do
+    [[ -z "$candidate" ]] && continue
+
+    local enh_title enh_detail
+    if [[ "$candidate" == *"|"* ]]; then
+      enh_title=$(echo "${candidate%%|*}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+      enh_detail=$(echo "${candidate#*|}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    else
+      enh_title=$(echo "$candidate" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+      enh_detail="詳細はテストログを参照"
+    fi
+
+    [[ -z "$enh_title" ]] && enh_title="テストで見つかった機能改善提案"
+    _flush_issue "[Test][Enhancement] $enh_title" "## テスト中に見つかった追加機能提案\n$enh_detail" "enhancement,codex-detected,test-detected"
+  done <<< "${TEST_ISSUE_ENHANCEMENT_LINES:-}"
+
   if [[ $issue_count -eq 0 ]]; then
     success "Issue 作成は不要でした（該当する問題なし）"
   else
-    success "GitHub Issue を $issue_count 件作成しました"
+    success "GitHub Issue を $issue_count 件作成しました (bug: $ISSUE_BUG_COUNT / enhancement: $ISSUE_ENH_COUNT)"
     echo -e "$ISSUE_URLS"
   fi
 }
@@ -552,6 +644,10 @@ main() {
   PR_REVIEW_OUTPUT=""
   TEST_GEN_OUTPUT=""
   TEST_RUN_OUTPUT=""
+  TEST_FAILED=false
+  TEST_ISSUE_BUG_LINES=""
+  TEST_ISSUE_ENHANCEMENT_LINES=""
+  TEST_HAS_ISSUE_CANDIDATES=false
   REVIEW_HAS_CRITICAL=false
   ISSUE_URLS=""
 
@@ -606,9 +702,12 @@ main() {
   # Phase 4
   generate_report
 
-  # Phase 5: GitHub Issue 作成（テスト失敗 or タイムアウト時のみ）
-  if [[ "$CREATE_ISSUES" == "true" && "$TEST_FAILED" == "true" ]] && [[ -n "$REVIEW_OUTPUT" ]]; then
-    info "バグ修正が失敗したため、GitHub Issue を登録します"
+  # Phase 5: GitHub Issue 作成（未解決バグ or 追加機能提案）
+  local bug_candidate_count enhancement_candidate_count
+  bug_candidate_count=$(printf "%s" "${TEST_ISSUE_BUG_LINES:-}" | awk 'NF {c++} END {print c+0}')
+  enhancement_candidate_count=$(printf "%s" "${TEST_ISSUE_ENHANCEMENT_LINES:-}" | awk 'NF {c++} END {print c+0}')
+  if [[ "$CREATE_ISSUES" == "true" ]] && { [[ "${TEST_FAILED:-false}" == "true" ]] || [[ "$bug_candidate_count" -gt 0 ]] || [[ "$enhancement_candidate_count" -gt 0 ]]; }; then
+    info "テスト結果に基づいて GitHub Issue を登録します"
     create_github_issues "$REVIEW_OUTPUT" "$CREATE_MEDIUM"
   fi
 

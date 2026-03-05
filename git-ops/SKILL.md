@@ -14,11 +14,12 @@ description: Git operations policy including automatic branch/worktree creation 
 - **新機能開始時**: 新しい機能の実装を始める前（ブランチ確認）
 
 ## 自動実行フロー
-1. **タスク情報の確定**: type/description/issue番号を決める
-2. **作業戦略の選択**: 標準は単一ディレクトリでブランチ切替。複数タスクを物理分離したい場合のみworktreeを使う
-3. **ブランチ設定**: 対象タスクのブランチを作成または切替（main/master/develop上で実装しない）
-4. **変更確認**: `git status`で未コミットの変更を確認
-5. **自動コミット**: 変更があれば`scripts/auto-commit.sh`または通常gitコマンドでコミット
+1. **Issue確認**: 作業開始時/タスク切替時に Open Issue を確認（`gh issue list --state open --limit 20`、必要なら `gh issue view <番号>`）
+2. **タスク情報の確定**: type/description/issue番号を決める
+3. **作業戦略の選択**: 標準は単一ディレクトリでブランチ切替。複数タスクを物理分離したい場合のみworktreeを使う
+4. **ブランチ設定**: 対象タスクのブランチを作成または切替（main/master/develop上で実装しない）
+5. **変更確認**: `git status`で未コミットの変更を確認
+6. **自動コミット**: 変更があれば`scripts/auto-commit.sh`または通常gitコマンドでコミット
 
 ## 必須ステップ
 - `references/git-policy.md`を読み、ポリシーに従う

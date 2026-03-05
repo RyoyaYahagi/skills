@@ -32,6 +32,7 @@ description: "Load this skill BEFORE asking the user any question,
    → No: 次へ
 
 2. 既存の情報源から答えが得られるか？
+   → GitHub Issue（Open Issue / 優先度ラベル / 受け入れ条件）
    → Obsidian ToDo / Daily Note / プロジェクトノート
    → ユーザーの過去の指示（会話履歴）
    → プロジェクトの rules.md / README
@@ -61,6 +62,7 @@ description: "Load this skill BEFORE asking the user any question,
 | ネットワークリクエストが正しいか | DevToolsネットワークパネル確認                 | chrome-devtools MCP                        |
 | リンター/型エラーがないか        | lint / type-check コマンド実行                 | ターミナル直接実行                         |
 | git操作すべきか                  | `git status` + `git diff` で状態確認           | `git-ops` スキル                           |
+| 次に着手すべき実装は何か         | `gh issue list --state open` + `gh issue view` | GitHub CLI（`gh`）                         |
 | 次のタスクは何か                 | Obsidian ToDo + プロジェクトノート参照         | `obsidian-brain` / `project-hub`           |
 
 ### 検証手段がない場合
@@ -80,10 +82,11 @@ description: "Load this skill BEFORE asking the user any question,
 ### 「次は何をすればいいですか？」→ 自分で判断する
 
 1. ユーザーの直近の指示（会話履歴）を再確認
-2. `obsidian-brain` で Daily Note / プロジェクトノートの ToDo を参照
-3. `project-hub` で現在のプロジェクトの未完了タスクを確認
-4. 現在の実装状態との差分から、次にやるべきことを特定
-5. 特定できたら報告せずに着手する
+2. GitHub Issue を確認（`gh issue list --state open --limit 20`、必要なら `gh issue view <番号>`）
+3. `obsidian-brain` で Daily Note / プロジェクトノートの ToDo を参照
+4. `project-hub` で現在のプロジェクトの未完了タスクを確認
+5. 現在の実装状態との差分から、次にやるべきことを特定
+6. 特定できたら報告せずに着手する
 
 ### 「どちらの実装方法がいいですか？」→ 自分で決める
 

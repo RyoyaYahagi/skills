@@ -33,6 +33,18 @@ Second-brain/
 └── MOC/            # 索引ページ
 ```
 
+## 強制運用モード（Project Context Loop）
+
+プロジェクト実装・調査タスクでは、以下を**毎回必須**で実行する。
+
+1. `project-hub` でプロジェクトを特定する
+2. `Projects/{project}/_Index.md`, `tasks.md`, `progress-log.md`, `decisions.md`, `failures.md` を読み取る
+3. 当日セッションノート `AI-Sessions/YYYY-MM-DD-{project}.md` を確認し、存在する場合は新規作成せず追記する
+4. 実装フェーズの区切りごとにセッションノートへ追記する（計画、実装、テスト、コミット）
+5. 最終報告前に `progress-log.md` とセッションノートの更新を確認する
+
+既存ノートがあるプロジェクトでは、既存ノートを一次情報として扱い、未存在ファイルのみ作成する。
+
 ## Obsidian CLI Operations
 
 Obsidian CLI の以下の操作を使用:
@@ -61,21 +73,25 @@ Obsidian CLI の以下の操作を使用:
 
 ### セッション開始時
 
-1. `obsidian create` で新規セッションノートを `AI-Sessions/YYYY-MM-DD-{project}.md` に作成
-2. テンプレート `Templates/session.md` を使用
-3. プロジェクトページにセッションリンクを追加
+1. `project-hub` でプロジェクト判定を行う
+2. `Projects/{project}/` 配下の既存ノート（`_Index.md`, `tasks.md`, `progress-log.md`, `decisions.md`, `failures.md`）を読み込む
+3. `AI-Sessions/YYYY-MM-DD-{project}.md` を読み取り、未作成の場合のみ `obsidian create` で作成する
+4. セッション開始ログ（目的、参照ノート、開始時点のタスク）を同ノートに追記する
+5. プロジェクトページにセッションリンクを追加（未登録時のみ）
 
 ### 作業中
 
-1. 進捗・変更をセッションノートに記録
-2. 発見した知識は `Knowledge/` に追記
-3. 関連ノートへのリンクを追加
+1. 進捗・変更をセッションノートに記録（最低: 実装完了/テスト完了/コミット完了）
+2. 主要な進捗は `Projects/{project}/progress-log.md` にも追記
+3. 発見した知識は `Knowledge/` に追記
+4. 関連ノートへのリンクを追加
 
 ### セッション終了時
 
 1. セッションノートのサマリーを更新
 2. Next Stepsを記録
-3. MOCの更新（必要に応じて）
+3. 当日コミットがある場合はコミット情報をセッションノートと `progress-log.md` に反映
+4. MOCの更新（必要に応じて）
 
 ### 知識検索
 
