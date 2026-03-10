@@ -1,0 +1,44 @@
+{
+  "skill_name": "paragraph-pptx",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "template.pptxを使って、『機械学習の基礎』というテーマで5枚のスライドを作って。タイトル＋4枚のコンテンツスライド。内容は適当に考えて。output.pptxとして保存して。",
+      "expected_output": "5枚のスライド: slide1=タイトル(slideLayout1), slide2-5=パラグラフスライド(slideLayout13)。各スライドに話題ヘッダー・メッセージ・補足説明が適切に設定されている。",
+      "files": ["/Users/yappa/code/pptx/template.pptx"],
+      "expectations": [
+        "output.pptx が生成され、破損せず開ける（unpack可能）",
+        "presentation.xml の sldIdLst に正確に5つの sldId がある",
+        "各コンテンツスライドに idx=11 (話題ヘッダー) のプレースホルダーがあり、テンプレートのデフォルトテキストではない実際のコンテンツが入っている",
+        "各コンテンツスライドに type=title (メッセージ) のプレースホルダーがあり、実際のコンテンツが入っている",
+        "スライドサイズが4:3 (cx=9144000, cy=6858000) のまま変更されていない"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "template.pptxで、3つの深層学習フレームワーク（PyTorch, TensorFlow, JAX）を比較する3カードスライドを作って。さらに各カードを順番にハイライトする段階表示（3枚分の複製）もつけて。output.pptxとして保存して。",
+      "expected_output": "4枚のスライド: 3カードスライド(slide5ベース)を複製し、各複製で異なるカードに黄色ハイライト枠が配置されている。カード内にフレームワーク名と特徴が記載。",
+      "files": ["/Users/yappa/code/pptx/template.pptx"],
+      "expectations": [
+        "output.pptx が生成され、破損せず開ける（unpack可能）",
+        "少なくとも3枚の段階表示用スライドが存在する",
+        "黄色ハイライト枠（roundRect + srgbClr val=FFFF00 or 線幅57150前後）が段階表示スライドに存在する",
+        "3つのフレームワーク名（PyTorch, TensorFlow, JAX）がスライド内のテキストに含まれている",
+        "カード枠（rect要素で線幅19050前後、またはslide5由来の既存カード構造）が存在する"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "template.pptxで研究の課題と提案手法を説明するスライドを2枚作って。課題スライドには黒背景の課題ボックスを使って3つの課題を列挙、提案スライドにはMemoバーで補足説明を入れて。内容は自然言語処理に関するもので適当に考えて。output.pptxとして保存して。",
+      "expected_output": "2枚のパラグラフスライド: 1枚目に黒背景ボックス(solidFill 000000 + 白テキスト)で課題3つ、2枚目にMemoバー(accent6ラベル+テキストボックス)が配置されている。",
+      "files": ["/Users/yappa/code/pptx/template.pptx"],
+      "expectations": [
+        "output.pptx が生成され、破損せず開ける（unpack可能）",
+        "課題スライドに黒背景ボックス（solidFill srgbClr val=000000）が存在する",
+        "黒背景ボックス内のテキストが白色（srgbClr val=FFFFFF）である",
+        "提案スライドに Memo ラベル（accent6 の fillRef を使った矩形 + 'Memo' テキスト）が存在する",
+        "Memo テキストボックスが Memo ラベルの右隣に配置されている（x座標がラベルより大きい）"
+      ]
+    }
+  ]
+}
