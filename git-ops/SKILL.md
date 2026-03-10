@@ -17,14 +17,14 @@ description: Git operations policy including automatic branch/worktree creation 
 1. **Issue確認**: 作業開始時/タスク切替時に Open Issue を確認（`gh issue list --state open --limit 20`、必要なら `gh issue view <番号>`）
 2. **タスク情報の確定**: type/description/issue番号を決める
 3. **作業戦略の選択**: 標準は単一ディレクトリでブランチ切替。複数タスクを物理分離したい場合のみworktreeを使う
-4. **ブランチ設定**: 対象タスクのブランチを作成または切替（main/master/develop上で実装しない）
+4. **ブランチ設定**: 実装開始前に対象タスクのブランチを作成または切替（main/master/develop上で実装しない）
 5. **変更確認**: `git status`で未コミットの変更を確認
 6. **自動コミット**: 変更があれば`scripts/auto-commit.sh`または通常gitコマンドでコミット
 
 ## 必須ステップ
 - `references/git-policy.md`を読み、ポリシーに従う
 - **機能分離ポリシーを厳守**（1機能=1ブランチ）
-- タスク開始時に対象ブランチを必ず作成/切替
+- タスク開始時、実装に着手する前に対象ブランチを必ず作成/切替
 - `scripts/auto-worktree.sh`は必要な場合のみ使用（必須ではない）
 - `scripts/auto-commit.sh`でコミット自動化可能
 - `scripts/pr.sh`でPR作成
@@ -42,7 +42,8 @@ description: Git operations policy including automatic branch/worktree creation 
 1. **標準運用**: 単一ディレクトリでブランチを切り替えて進行（スレッド分離は不要）
 2. **必要時のみWorktree**: コンテキスト衝突や長時間並走が見込まれるときだけ`auto-worktree.sh`を使用
 3. **Stash活用**: ブランチ切り替え前に`git stash push -m "機能名-wip"`
-4. **状態確認**: 切替前後で`git status`を確認して混在を防止
+4. **後追い修正の標準手順**: 実装後にブランチが不適切だと判明した場合は、`git stash push` → 適切な新ブランチ作成 → `git stash pop` の順で移す
+5. **状態確認**: 切替前後で`git status`を確認して混在を防止
 
 ## Worktree配置規約
 - デフォルト配置先: `../wt/<repo名>/<branch名をスラッシュ置換>`
