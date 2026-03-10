@@ -26,19 +26,27 @@ If an IPA is available:
 greenlight preflight . --ipa /path/to/build.ipa
 ```
 
-If `greenlight` is missing, install it:
+If `greenlight` is missing, install a pinned release:
 
 ```bash
 # Homebrew (macOS)
 brew install revylai/tap/greenlight
 
 # Go
-go install github.com/RevylAI/greenlight/cmd/greenlight@latest
+go install github.com/RevylAI/greenlight/cmd/greenlight@v0.1.0
 
 # Build from source
 git clone https://github.com/RevylAI/greenlight.git
 cd greenlight && make build
 ```
+
+Use App Store Connect API key auth only:
+
+```bash
+greenlight auth setup
+```
+
+Do not use Apple ID session login on shared or unmanaged machines. Prefer short-lived API-key based access and keep the `.p8` key outside the scanned project tree.
 
 ## Step 2: Fix Findings
 
