@@ -28,7 +28,7 @@ description: リポジトリ運用エージェント - git操作・CI・PR作成
 - 命名規則: `<type>/<ISSUE番号>-short-desc`
 - type: `feature` | `fix` | `chore` | `hotfix` | `refactor`
 - 例: `feature/ISSUE-123-add-login`, `fix/ISSUE-456-api-error`
-- エージェントがベースブランチを確認して作成
+- エージェントがベースブランチを確認して作成し、実装開始前にそのブランチへ移動する
 
 ### 2.5 タスク別Worktree設定（任意）
 - 標準運用では単一作業ディレクトリでブランチを切り替えて進める
@@ -64,6 +64,7 @@ description: リポジトリ運用エージェント - git操作・CI・PR作成
 
 1. **新しいタスク開始時**
    - 新しい機能、修正、リファクタリングの着手時
+   - 実装に入る前に対象ブランチを作成して移動する
    - 現在のブランチがmain/master/developの場合は必須
 
 2. **異なるスコープの変更時**
@@ -167,11 +168,18 @@ git stash push -m "feature-name-wip"
 git stash pop
 ```
 
+実装完了後に「この変更は今いるブランチとスコープが合っていない」と判明した場合も、例外なく次の順で移す：
+```bash
+git stash push -m "feature-name-wip"
+git switch -c <type>/<issue-or-date>-<short-desc>
+git stash pop
+```
+
 #### 5. 機能開始チェックリスト
 新機能の開発を開始する前に：
 - [ ] 現在のブランチを確認（`git branch --show-current`）
 - [ ] 未コミットの変更がないか確認（`git status`）
-- [ ] 新しい機能ブランチを作成（必要時のみworktreeを作成）
+- [ ] 実装前に新しい機能ブランチを作成して移動（必要時のみworktreeを作成）
 - [ ] 既存の別機能の変更がないか確認
 
 ---
@@ -197,8 +205,8 @@ git stash pop
 
 ### 自動実行OK（AIが実行）
 1. **ブランチ確認・作成**:
-     - 現在の変更が新しい機能/タスクの場合、必ず新ブランチを作成して移動する
-     - 誤ったブランチ（develop/mainなど）にいる場合、変更を持ったまま適切なブランチへ切り替える (`git switch -c new-branch`)
+     - 現在の変更が新しい機能/タスクの場合、実装前に必ず新ブランチを作成して移動する
+     - 実装後にブランチが不適切だと判明した場合は、`git stash push` → `git switch -c new-branch` → `git stash pop` の順で移す
 2. 必要時のみ`scripts/auto-worktree.sh`でタスク別worktreeを作成/再利用
 3. ブランチの命名（`<type>/...`）
 4. 小さな変更のコミット（Conventional Commits準拠）
@@ -230,7 +238,7 @@ git stash pop
 8. コミットには `--signoff` を付ける
 9. **コンテキスト確認**: 作業開始前に必ず `git branch --show-current` でブランチを確認する
 10. **タスク分離**: 異なるタスク/Issueに取り組む際は、必ず新しいブランチを作成するか適切なブランチに切り替える
-11. **変更退避**: ブランチ切り替え時に未コミットの変更がある場合は、`git stash` で退避するかコミットする
+11. **変更退避**: ブランチ切り替え時に未コミットの変更がある場合は、`git stash` で退避する。実装後に誤ったブランチだと判明した場合も、`git stash push` → 新ブランチ作成 → `git stash pop` を標準手順とする
 12. **並行タスク時の運用選択**: 標準はブランチ切替、必要時のみworktreeを使う
 
 ---
