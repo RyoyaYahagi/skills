@@ -1,13 +1,13 @@
 ---
 name: paragraph-pptx
-description: "Create academic and research presentations using the パラグラフテンプレート (paragraph template) — a custom 4:3 slide template with topic-header/message/supporting-content structure. Use this skill whenever the user mentions template.pptx, パラグラフテンプレート, パラグラフスライド, 学術発表スライド, 研究プレゼン, or wants to create slides with topic+message+supporting-detail structure. Also trigger when the user references slide duplication for animation, yellow highlight frames, Memo bars, card layouts (3-card/4-card), or any of the design patterns specific to this template. If the user has template.pptx in their working directory and asks to create a presentation, use this skill."
+description: "Create academic and research presentations using the パラグラフテンプレート (paragraph template) — a custom 4:3 slide template with topic-header/message/supporting-content structure. Use this skill whenever the user mentions template.pptx, パラグラフテンプレート, パラグラフスライド, 学術発表スライド, 研究プレゼン, or wants to create slides with topic+message+supporting-detail structure. Also trigger when the user references slide duplication for animation, yellow highlight frames, Memo bars, card layouts (3-card/4-card), or any of the design patterns specific to this template. Prefer the bundled reference template at `references/template.pptx` unless the user explicitly supplies a different template."
 ---
 
 # パラグラフテンプレート スキル
 
 template.pptx を使った学術発表・研究プレゼンテーション作成ガイド。
 
-このスキルは既存の **pptx スキル**（unpack→edit→pack ワークフロー）の上に乗るテンプレート固有の知識を提供する。pptx スキルの `editing.md` に記載されたワークフローとスクリプト群をそのまま使い、本スキルはテンプレートの構造・デザインパターン・XML スニペットを補完する。
+このスキルは既存の **pptx スキル**（unpack→edit→pack ワークフロー）の上に乗るテンプレート固有の知識を提供する。pptx スキルの `editing.md` に記載されたワークフローとスクリプト群をそのまま使い、本スキルはテンプレートの構造・デザインパターン・XML スニペットを補完する。テンプレートの正本はこのスキル配下の `references/template.pptx` とし、ユーザーが別テンプレートを明示しない限りこのファイルを使う。
 
 ## テンプレート概要
 
@@ -18,7 +18,7 @@ template.pptx を使った学術発表・研究プレゼンテーション作成
 | フォント（本文） | 游ゴシック Medium |
 | メインレイアウト | slideLayout13.xml（パラグラフスライド） |
 | タイトルレイアウト | slideLayout1.xml |
-| テンプレートファイル | template.pptx |
+| テンプレートファイル | `references/template.pptx`（正本） |
 
 ## テンプレートスライド一覧
 
@@ -34,6 +34,13 @@ template.pptx を使った学術発表・研究プレゼンテーション作成
 | slide8 | 4カード（循環） | 4項目の循環関係 |
 
 基本は **slide2 を複製**してコンテンツスライドを作る。カード比較が必要なときだけ slide5〜8 を使う。
+
+## テンプレート参照ルール
+
+- 正式な参照元は `references/template.pptx`。eval もこのパスを使う。
+- 既存の pptx ワークフローをそのまま使いたい場合は、作業ディレクトリへ `template.pptx` としてコピーしてから unpack / pack してよい。
+- 直接パスを指定してもよいが、`unpack.py` と `pack.py --original` では同じテンプレートを参照する。
+- ユーザーが別の `.pptx` を明示した場合のみ、そのファイルを優先する。
 
 ## パラグラフスライドの3層構造
 
@@ -93,8 +100,10 @@ pptx スキルの editing.md のワークフローに従う。テンプレート
 
 ### 1. unpack
 ```bash
-python3 scripts/office/unpack.py template.pptx unpacked/
+python3 scripts/office/unpack.py references/template.pptx unpacked/
 ```
+
+既存ツールやスクリプトがカレントディレクトリの `template.pptx` を前提にしている場合は、先に `references/template.pptx` を作業ディレクトリへコピーしてから同じ手順を使ってよい。
 
 ### 2. スライド構成を計画
 presentation.xml の `<p:sldIdLst>` を確認。通常スライド → slide2 複製、カード → slide5〜8 複製。
@@ -113,13 +122,21 @@ python3 scripts/add_slide.py unpacked/ slide7.xml   # 4カード
 - 話題ヘッダー（idx="11"）→ トピックテキストを書き換え
 - メッセージ（type="title"）→ メッセージテキストを書き換え
 - 補足説明（idx="1"）→ テキスト箇条書き or 空にして自由配置
+- **スピーカーノート** → 各スライドに必ず作成する。最低でも「話題の言い換え」「メッセージの口頭説明」「補足説明で強調する点」を 3-5 文程度で書く。
 
-図形・テキストボックスの追加が必要なときは [references/xml-patterns.md](references/xml-patterns.md) の XML スニペットをコピペする。
+図形・テキストボックスの追加が必要なときは [references/xml-patterns.md](references/xml-patterns.md) の XML スニペットをコピペする。スピーカーノートの書き方は [references/speaker-notes.md](references/speaker-notes.md) を参照。
 
-### 5. clean & pack
+### 5. スピーカーノート調整
+
+- タイトルスライドにも短い導入ノートを付ける。
+- パラグラフスライドでは、見出しを読むだけで終わらず、メッセージの因果関係や補足の読み上げ順を書く。
+- 段階表示の複製スライドでは、ノート本文は使い回してよいが、その段で新しく注目させる要素を 1 文追加する。
+- Memo バーや黒背景ボックスがある場合は、ノートでも「何を注意喚起する欄か」を明示する。
+
+### 6. clean & pack
 ```bash
 python3 scripts/clean.py unpacked/
-python3 scripts/office/pack.py unpacked/ output.pptx --original template.pptx
+python3 scripts/office/pack.py unpacked/ output.pptx --original references/template.pptx
 ```
 
 ## デザインパターン
